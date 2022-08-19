@@ -22,11 +22,24 @@ public final class PeertubeSearchQueryHandlerFactory extends SearchQueryHandlerF
     public static final String SEPIA_BASE_URL = "https://sepiasearch.org";
     public static final String SEARCH_ENDPOINT = "/api/v1/search/videos";
 
+    private static PeertubeSearchQueryHandlerFactory instance = null;
+    private final PeertubeFilters searchFilters = new PeertubeFilters();
+
     private PeertubeSearchQueryHandlerFactory() {
     }
 
-    public static PeertubeSearchQueryHandlerFactory getInstance() {
-        return new PeertubeSearchQueryHandlerFactory();
+    /**
+     * Singleton to get the same objects of filters during search.
+     * <p>
+     * The sort filter holds a variable search parameter: (filter.getQueryData())
+     *
+     * @return
+     */
+    public static synchronized PeertubeSearchQueryHandlerFactory getInstance() {
+        if (instance == null) {
+            instance = new PeertubeSearchQueryHandlerFactory();
+        }
+        return instance;
     }
 
     @Override
