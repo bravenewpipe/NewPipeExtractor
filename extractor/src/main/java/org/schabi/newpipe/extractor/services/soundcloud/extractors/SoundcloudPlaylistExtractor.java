@@ -1,5 +1,8 @@
 package org.schabi.newpipe.extractor.services.soundcloud.extractors;
 
+import static org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper.SOUNDCLOUD_API_V2_URL;
+import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
+
 import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
@@ -16,17 +19,12 @@ import org.schabi.newpipe.extractor.playlist.PlaylistExtractor;
 import org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
-import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-
-import static org.schabi.newpipe.extractor.services.soundcloud.SoundcloudParsingHelper.SOUNDCLOUD_API_V2_URL;
-import static org.schabi.newpipe.extractor.utils.Utils.EMPTY_STRING;
-import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
 public class SoundcloudPlaylistExtractor extends PlaylistExtractor {
     private static final int STREAMS_PER_REQUESTED_PAGE = 15;
@@ -88,7 +86,7 @@ public class SoundcloudPlaylistExtractor extends PlaylistExtractor {
             }
 
             if (artworkUrl == null) {
-                return EMPTY_STRING;
+                return "";
             }
         }
 
@@ -165,7 +163,7 @@ public class SoundcloudPlaylistExtractor extends PlaylistExtractor {
         }
 
         final String currentPageUrl = SOUNDCLOUD_API_V2_URL + "tracks?client_id="
-                + SoundcloudParsingHelper.clientId() + "&ids=" + Utils.join(",", currentIds);
+                + SoundcloudParsingHelper.clientId() + "&ids=" + String.join(",", currentIds);
 
         final StreamInfoItemsCollector collector = new StreamInfoItemsCollector(getServiceId());
         final String response = NewPipe.getDownloader().get(currentPageUrl,
