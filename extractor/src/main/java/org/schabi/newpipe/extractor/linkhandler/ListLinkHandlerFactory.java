@@ -1,10 +1,12 @@
 package org.schabi.newpipe.extractor.linkhandler;
 
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class ListLinkHandlerFactory extends LinkHandlerFactory {
 
@@ -12,12 +14,14 @@ public abstract class ListLinkHandlerFactory extends LinkHandlerFactory {
     // To Override
     ///////////////////////////////////
 
-    public abstract String getUrl(String id, List<String> contentFilter, String sortFilter)
+    public abstract String getUrl(String id,
+                                  List<FilterItem> contentFilter,
+                                  List<FilterItem> sortFilter)
             throws ParsingException;
 
     public String getUrl(final String id,
-                         final List<String> contentFilter,
-                         final String sortFilter,
+                         final List<FilterItem> contentFilter,
+                         final List<FilterItem> sortFilter,
                          final String baseUrl) throws ParsingException {
         return getUrl(id, contentFilter, sortFilter);
     }
@@ -35,10 +39,7 @@ public abstract class ListLinkHandlerFactory extends LinkHandlerFactory {
 
     @Override
     public ListLinkHandler fromUrl(final String url, final String baseUrl) throws ParsingException {
-        if (url == null) {
-            throw new IllegalArgumentException("url may not be null");
-        }
-
+        Objects.requireNonNull(url, "URL may not be null");
         return new ListLinkHandler(super.fromUrl(url, baseUrl));
     }
 
@@ -52,16 +53,16 @@ public abstract class ListLinkHandlerFactory extends LinkHandlerFactory {
         return new ListLinkHandler(super.fromId(id, baseUrl));
     }
 
-    public ListLinkHandler fromQuery(final String id,
-                                     final List<String> contentFilters,
-                                     final String sortFilter) throws ParsingException {
-        final String url = getUrl(id, contentFilters, sortFilter);
-        return new ListLinkHandler(url, url, id, contentFilters, sortFilter);
+    public ListLinkHandler fromQuery(final String query,
+                                     final List<FilterItem> contentFilter,
+                                     final List<FilterItem> sortFilter) throws ParsingException {
+        final String url = getUrl(query, contentFilter, sortFilter);
+        return new ListLinkHandler(url, url, query, contentFilter, sortFilter);
     }
 
     public ListLinkHandler fromQuery(final String id,
-                                     final List<String> contentFilters,
-                                     final String sortFilter,
+                                     final List<FilterItem> contentFilters,
+                                     final List<FilterItem> sortFilter,
                                      final String baseUrl) throws ParsingException {
         final String url = getUrl(id, contentFilters, sortFilter, baseUrl);
         return new ListLinkHandler(url, url, id, contentFilters, sortFilter);
@@ -75,31 +76,11 @@ public abstract class ListLinkHandlerFactory extends LinkHandlerFactory {
      * @return the url corresponding to id without any filters applied
      */
     public String getUrl(final String id) throws ParsingException {
-        return getUrl(id, new ArrayList<>(0), "");
+        return getUrl(id, new ArrayList<>(0), null);
     }
 
     @Override
     public String getUrl(final String id, final String baseUrl) throws ParsingException {
-        return getUrl(id, new ArrayList<>(0), "", baseUrl);
-    }
-
-    /**
-     * Will returns content filter the corresponding extractor can handle like "channels", "videos",
-     * "music", etc.
-     *
-     * @return filter that can be applied when building a query for getting a list
-     */
-    public String[] getAvailableContentFilter() {
-        return new String[0];
-    }
-
-    /**
-     * Will returns sort filter the corresponding extractor can handle like "A-Z", "oldest first",
-     * "size", etc.
-     *
-     * @return filter that can be applied when building a query for getting a list
-     */
-    public String[] getAvailableSortFilter() {
-        return new String[0];
+        return getUrl(id, new ArrayList<>(0), null, baseUrl);
     }
 }

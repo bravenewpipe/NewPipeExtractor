@@ -7,10 +7,11 @@ import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getTextFromObject;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.getValidJsonResponseBody;
 import static org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper.prepareDesktopJsonBuilder;
-import static org.schabi.newpipe.extractor.services.youtube.linkHandler.YoutubeSearchQueryHandlerFactory.getSearchParameter;
 import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 
+import org.schabi.newpipe.extractor.search.SearchExtractor;
+import org.schabi.newpipe.extractor.services.youtube.search.filter.YoutubeFilters;
 import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonBuilder;
 import com.grack.nanojson.JsonObject;
@@ -29,9 +30,9 @@ import org.schabi.newpipe.extractor.linkhandler.SearchQueryHandler;
 import org.schabi.newpipe.extractor.localization.Localization;
 import org.schabi.newpipe.extractor.localization.TimeAgoParser;
 import org.schabi.newpipe.extractor.MultiInfoItemsCollector;
-import org.schabi.newpipe.extractor.search.SearchExtractor;
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
 import org.schabi.newpipe.extractor.utils.JsonUtils;
+import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -73,15 +74,11 @@ public class YoutubeSearchExtractor extends SearchExtractor {
         final String query = super.getSearchString();
         final Localization localization = getExtractorLocalization();
 
-        // Get the search parameter of the request
-        final List<String> contentFilters = super.getLinkHandler().getContentFilters();
-        final String params;
-        if (!isNullOrEmpty(contentFilters)) {
-            final String searchType = contentFilters.get(0);
-            params = getSearchParameter(searchType);
-        } else {
-            params = "";
-        }
+        final YoutubeFilters.YoutubeContentFilterItem contentFilterItem =
+                Utils.getFirstContentFilterItem(getLinkHandler());
+        // Get the search parameter for the request. If getParams() be null
+        // (which should never happen - only in test cases), JsonWriter.string() can handle it
+        final String params = (contentFilterItem != null) ? contentFilterItem.getParams() : null;
 
         final JsonBuilder<JsonObject> jsonBody = prepareDesktopJsonBuilder(localization,
                 getExtractorContentCountry())

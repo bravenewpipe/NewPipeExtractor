@@ -1,11 +1,9 @@
 package org.schabi.newpipe.extractor.services.soundcloud;
 
 import static org.schabi.newpipe.extractor.ServiceList.SoundCloud;
-import static org.schabi.newpipe.extractor.utils.Utils.EMPTY_STRING;
 import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
 import static org.schabi.newpipe.extractor.utils.Utils.replaceHttpWithHttps;
-import static java.util.Collections.singletonList;
 
 import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
@@ -39,8 +37,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.annotation.Nonnull;
 
@@ -68,8 +66,8 @@ public final class SoundcloudParsingHelper {
         // The one containing the client id will likely be the last one
         Collections.reverse(possibleScripts);
 
-        final HashMap<String, List<String>> headers = new HashMap<>();
-        headers.put("Range", singletonList("bytes=0-50000"));
+        final Map<String, List<String>> headers = Collections.singletonMap("Range",
+                Collections.singletonList("bytes=0-50000"));
 
         for (final Element element : possibleScripts) {
             final String srcUrl = element.attr("src");
@@ -326,17 +324,17 @@ public final class SoundcloudParsingHelper {
 
     @Nonnull
     public static String getUploaderUrl(final JsonObject object) {
-        final String url = object.getObject("user").getString("permalink_url", EMPTY_STRING);
+        final String url = object.getObject("user").getString("permalink_url", "");
         return replaceHttpWithHttps(url);
     }
 
     @Nonnull
     public static String getAvatarUrl(final JsonObject object) {
-        final String url = object.getObject("user").getString("avatar_url", EMPTY_STRING);
+        final String url = object.getObject("user").getString("avatar_url", "");
         return replaceHttpWithHttps(url);
     }
 
     public static String getUploaderName(final JsonObject object) {
-        return object.getObject("user").getString("username", EMPTY_STRING);
+        return object.getObject("user").getString("username", "");
     }
 }
