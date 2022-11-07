@@ -1,5 +1,7 @@
 package org.schabi.newpipe.extractor.services.rumble.linkHandler;
 
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
+
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandlerFactory;
 import org.schabi.newpipe.extractor.utils.Utils;
@@ -26,8 +28,8 @@ public class RumbleChannelLinkHandlerFactory extends ListLinkHandlerFactory {
      * @return URL to channel
      */
     @Override
-    public String getUrl(final String id, final List<String> contentFilters,
-                         final String searchFilter) {
+    public String getUrl(final String id, final List<FilterItem> contentFilters,
+                         final List<FilterItem> searchFilter) {
         return "https://rumble.com/" + id;
     }
 

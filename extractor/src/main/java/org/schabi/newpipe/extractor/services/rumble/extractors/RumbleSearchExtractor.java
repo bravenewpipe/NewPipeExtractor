@@ -1,5 +1,8 @@
 package org.schabi.newpipe.extractor.services.rumble.extractors;
 
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
+import org.schabi.newpipe.extractor.services.rumble.search.filter.RumbleFilters;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -14,7 +17,6 @@ import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.SearchQueryHandler;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
-import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleSearchQueryHandlerFactory;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemExtractor;
 
 import javax.annotation.Nonnull;
@@ -70,16 +72,17 @@ public class RumbleSearchExtractor extends SearchExtractor {
             throws ExtractionException {
         final MultiInfoItemsCollector collector = new MultiInfoItemsCollector(getServiceId());
 
-        final List<String> contentFilters = super.getLinkHandler().getContentFilters();
+        final List<FilterItem> contentFilters = super.getLinkHandler().getContentFilters();
         int infoItemsListSize = 0;
 
         // default to video search if no content filter is set.
-        String searchType = RumbleSearchQueryHandlerFactory.VIDEOS;
+        int searchType = RumbleFilters.ID_CF_MAIN_VIDEOS;
+        // assume we have just one content filter
         if (!isNullOrEmpty(contentFilters)) {
-            searchType = contentFilters.get(0);
+            searchType = contentFilters.get(0).getIdentifier();
         }
 
-        if (searchType.equals(RumbleSearchQueryHandlerFactory.VIDEOS)) {
+        if (searchType == RumbleFilters.ID_CF_MAIN_VIDEOS) {
             final List<StreamInfoItemExtractor> infoItemsList =
                     rumbleCommonCodeTrendingAndSearching
                             .getSearchOrTrendingResultsItemList(doc);
@@ -87,7 +90,7 @@ public class RumbleSearchExtractor extends SearchExtractor {
                 collector.commit(infoItemExtractor);
             }
             infoItemsListSize = infoItemsList.size();
-        } else if (searchType.equals(RumbleSearchQueryHandlerFactory.CHANNELS)) {
+        } else if (searchType == RumbleFilters.ID_CF_MAIN_CHANNELS) {
             final List<RumbleChannelSearchInfoItemExtractor> infoItemsList =
                     extractChannelsFromSearchResult();
             for (final RumbleChannelSearchInfoItemExtractor infoItemExtractor : infoItemsList) {

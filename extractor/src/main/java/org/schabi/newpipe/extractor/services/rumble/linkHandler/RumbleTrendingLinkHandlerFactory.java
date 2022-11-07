@@ -1,5 +1,7 @@
 package org.schabi.newpipe.extractor.services.rumble.linkHandler;
 
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
+
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandlerFactory;
 
 import java.util.HashMap;
@@ -52,8 +54,8 @@ public final class RumbleTrendingLinkHandlerFactory extends ListLinkHandlerFacto
     }
 
     @Override
-    public String getUrl(final String id, final List<String> contentFilters,
-                         final String sortFilter) {
+    public String getUrl(final String id, final List<FilterItem> contentFilters,
+                         final List<FilterItem> sortFilter) {
         if ("".equals(id)) {
             return trendingId2UrlMap.get(DEFAULT_TRENDING);
         }

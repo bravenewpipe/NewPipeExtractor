@@ -1,5 +1,8 @@
 package org.schabi.newpipe.extractor.services.rumble.linkHandler;
 
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
+import org.schabi.newpipe.extractor.services.rumble.search.filter.RumbleFilters;
+
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.SearchQueryHandlerFactory;
 
@@ -7,48 +10,41 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.List;
 
-import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
+public final class RumbleSearchQueryHandlerFactory extends SearchQueryHandlerFactory {
 
-public class RumbleSearchQueryHandlerFactory extends SearchQueryHandlerFactory {
+    public static final String UTF_8 = "UTF-8";
+    private static RumbleSearchQueryHandlerFactory instance = null;
 
-    public static final String VIDEOS = "videos";
-    public static final String CHANNELS = "channels";
-
-    private static final String SEARCH_VIDEOS_URL = "https://rumble.com/search/video?q=";
-    private static final String SEARCH_CHANNEL_URL = "https://rumble.com/search/channel?q=";
-
-    public static RumbleSearchQueryHandlerFactory getInstance() {
-        return new RumbleSearchQueryHandlerFactory();
+    private RumbleSearchQueryHandlerFactory() {
+        super(new RumbleFilters());
     }
 
-    @Override
-    public String getUrl(final String searchString, final List<String> contentFilters,
-                         final String sortFilter)
-            throws ParsingException {
-        try {
-            if (!contentFilters.isEmpty()) {
-
-                switch (contentFilters.get(0)) {
-                    case VIDEOS:
-                    default:
-                        return SEARCH_VIDEOS_URL + URLEncoder.encode(searchString, UTF_8);
-                    case CHANNELS:
-                        return SEARCH_CHANNEL_URL + URLEncoder.encode(searchString, UTF_8);
-                }
-            }
-
-            // we default to searching videos
-            return SEARCH_VIDEOS_URL + URLEncoder.encode(searchString, UTF_8);
-        } catch (final UnsupportedEncodingException e) {
-            throw new ParsingException("Could not encode query", e);
+    public static synchronized RumbleSearchQueryHandlerFactory getInstance() {
+        if (instance == null) {
+            instance = new RumbleSearchQueryHandlerFactory();
         }
+        return instance;
     }
 
     @Override
-    public String[] getAvailableContentFilter() {
-        return new String[] {
-                VIDEOS,
-                CHANNELS
-        };
+    public String getUrl(final String searchString,
+                         final List<FilterItem> selectedContentFilter,
+                         final List<FilterItem> selectedSortFilter)
+            throws ParsingException {
+
+        searchFilters.setSelectedSortFilter(selectedSortFilter);
+        searchFilters.setSelectedContentFilter(selectedContentFilter);
+
+        final String sortQuery = searchFilters.evaluateSelectedSortFilters();
+        final String urlEndpoint = searchFilters.evaluateSelectedContentFilters();
+
+
+        try {
+            return urlEndpoint
+                    + URLEncoder.encode(searchString, UTF_8)
+                    + sortQuery;
+        } catch (final UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -16,10 +16,12 @@ import org.schabi.newpipe.extractor.ListExtractor;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.DefaultSearchExtractorTest;
 
 import org.schabi.newpipe.extractor.channel.ChannelInfoItem;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
+import org.schabi.newpipe.extractor.services.rumble.search.filter.RumbleFilters;
 
 import javax.annotation.Nullable;
 
@@ -30,8 +32,6 @@ import java.util.List;
 import static java.util.Collections.singletonList;
 import static org.schabi.newpipe.extractor.ExtractorAsserts.assertEmptyErrors;
 import static org.schabi.newpipe.extractor.services.DefaultTests.assertNoDuplicatedItems;
-import static org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleSearchQueryHandlerFactory.CHANNELS;
-import static org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleSearchQueryHandlerFactory.VIDEOS;
 import static org.schabi.newpipe.extractor.utils.Utils.UTF_8;
 
 @SuppressWarnings({"checkstyle:LineLength", "checkstyle:InvalidJavadocPosition", "checkstyle:LeftCurly"})
@@ -52,8 +52,10 @@ public class RumbleSearchExtractorTest {
 //            System.setProperty("downloader", "RECORDING");
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH
                     + "/MultiplePagesResults"));
+            final FilterItem videoFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_VIDEOS);
             extractor = (RumbleSearchExtractor)
-                    Rumble.getSearchExtractor(query, singletonList(VIDEOS), "");
+                    Rumble.getSearchExtractor(query, singletonList(videoFilterItem), null);
             extractor.fetchPage();
         }
 
@@ -101,8 +103,12 @@ public class RumbleSearchExtractorTest {
             System.setProperty("downloader", "MOCK");
 //            System.setProperty("downloader", "RECORDING");
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH + "/OnlyOnePageResults"));
+            final FilterItem videoFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_VIDEOS);
+            final FilterItem channelsFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_CHANNELS);
             extractor = (RumbleSearchExtractor)
-                Rumble.getSearchExtractor(query, singletonList(VIDEOS), "");
+                Rumble.getSearchExtractor(query, singletonList(videoFilterItem), null);
             extractor.fetchPage();
         }
 
@@ -125,8 +131,10 @@ public class RumbleSearchExtractorTest {
             System.setProperty("downloader", "MOCK");
 //            System.setProperty("downloader", "RECORDING");
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH + "/NoResultsAtAll"));
+            final FilterItem videoFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_VIDEOS);
             extractor = (RumbleSearchExtractor)
-                    Rumble.getSearchExtractor(query, singletonList(VIDEOS), "");
+                    Rumble.getSearchExtractor(query, singletonList(videoFilterItem), null);
             extractor.fetchPage();
         }
 
@@ -158,7 +166,10 @@ public class RumbleSearchExtractorTest {
             System.setProperty("downloader", "MOCK");
             // System.setProperty("downloader", "RECORDING");
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH + "/channel"));
-            extractor = Rumble.getSearchExtractor(query, singletonList(CHANNELS), "");
+            final FilterItem channelFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_CHANNELS);
+            extractor =
+                    Rumble.getSearchExtractor(query, singletonList(channelFilterItem), null);
             extractor.fetchPage();
         }
 
@@ -178,7 +189,10 @@ public class RumbleSearchExtractorTest {
             System.setProperty("downloader", "MOCK");
 //            System.setProperty("downloader", "RECORDING");
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH + "/paging"));
-            final SearchExtractor extractor = Rumble.getSearchExtractor("facts", singletonList(VIDEOS), "");
+            final FilterItem videoFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_VIDEOS);
+            final SearchExtractor extractor =
+                    Rumble.getSearchExtractor("facts", singletonList(videoFilterItem), null);
             extractor.fetchPage();
 
             final ListExtractor.InfoItemsPage<InfoItem> page1 = extractor.getInitialPage();
@@ -197,7 +211,10 @@ public class RumbleSearchExtractorTest {
             expectedSearchOriginalBaseUrl = "rumble.com/search/channel?q=";
 
             NewPipe.init(new DownloaderFactory().getDownloader(MOCK_PATH + "verified"));
-            extractor = Rumble.getSearchExtractor(query, singletonList(CHANNELS), "");
+
+            final FilterItem channelFilterItem = DefaultSearchExtractorTest
+                    .getFilterItem(Rumble, RumbleFilters.ID_CF_MAIN_CHANNELS);
+            extractor = Rumble.getSearchExtractor(query, singletonList(channelFilterItem), null);
             extractor.fetchPage();
         }
 

@@ -87,6 +87,10 @@ public enum LibraryStringIds {
     SEARCH_FILTERS_YES, /* Yes */
     SEARCH_FILTERS_YOUTUBE_MUSIC, /* YouTube Music */
     SEARCH_FILTERS_PURCHASED, /* Purchased */
+    SEARCH_FILTERS_SHORT, /* Short */
+    SEARCH_FILTERS_LONG, /* Long */
+    SEARCH_FILTERS_RUMBLES /* Rumbles */,
+    SEARCH_FILTERS_MOST_RECENT, /* Most recent */
     SEARCH_FILTERS_SHORT_0_5M, /* Short (0-5m) */
     SEARCH_FILTERS_MEDIUM_5_20M, /*  Medium (5-20m) */
     SEARCH_FILTERS_LONG_20M_PLUS, /*  Long (20m+) */
