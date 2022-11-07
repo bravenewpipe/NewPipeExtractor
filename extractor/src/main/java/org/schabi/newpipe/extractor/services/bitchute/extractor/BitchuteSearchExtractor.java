@@ -1,5 +1,7 @@
 package org.schabi.newpipe.extractor.services.bitchute.extractor;
 
+import org.schabi.newpipe.extractor.services.bitchute.search.filter.BitchuteFilters;
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import com.grack.nanojson.JsonArray;
 import com.grack.nanojson.JsonObject;
 
@@ -81,15 +83,25 @@ public class BitchuteSearchExtractor extends SearchExtractor {
                 BitchuteParserHelper.getBasicHeader()).responseBody());
          */
 
+        final List<FilterItem> newQuery = getLinkHandler().getContentFilters();
+        if (newQuery == null || newQuery.isEmpty()) {
+            throw new RuntimeException("Somehow there is not content filter");
+        }
+        final FilterItem filter = newQuery.get(0); // assume only one content filter
+        if (!(filter instanceof BitchuteFilters.BitchuteFilterItem)) {
+            throw new RuntimeException("Somehow this is no valid Bitchute content filter");
+        }
+
+        final BitchuteFilters.BitchuteFilterItem contentFilter =
+                (BitchuteFilters.BitchuteFilterItem) filter;
+
+        final String sortQuery = contentFilter.getDataParams();
+        final String searchString = getLinkHandler().getId();
+        int currentPageNumber = Integer.parseInt(page.getId());
 
         // retrieve the results via json result
-        final String query = getLinkHandler().getId();
-        /* TODO for now we restrict to only search for videos and not for channel as I don't know
-           how to handle both. As they are separated query calls.
-         */
-        int currentPageNumber = Integer.parseInt(page.getId());
         final JsonObject jsonResponse = BitchuteParserHelper
-                .getSearchResultForQuery(query, BitchuteConstants.KIND_VIDEO, currentPageNumber);
+                .getSearchResultForQuery(searchString, sortQuery, currentPageNumber);
 
         final MultiInfoItemsCollector collector = new MultiInfoItemsCollector(getServiceId());
         InfoItemExtractor infoItemExtractor;
@@ -120,21 +132,8 @@ public class BitchuteSearchExtractor extends SearchExtractor {
                 final String thumbUrl = result.getObject("images").getString("thumbnail");
                 final String desc = result.getString(jsonDescKey);
 
-                final String textualDate = result.getString(jsonPublishedKey);
-                final String views = BitchuteHelpers.getIntAlwaysAsString(result, jsonViewsKey);
-                final String duration = result.getString(jsonDurationKey);
-                final String videoId = result.getString("id");
                 final String kind = result.getString(jsonKindKey);
-                final String uploader = result.getString(jsonUploaderKey);
-                final String uploaderUrl =
-                        BitchuteConstants.BASE_URL + result.getString(jsonUploaderUrlKey);
 
-                DateWrapper uploadDate = null;
-                try {
-                    uploadDate = timeAgoParser.parse(textualDate);
-                } catch (final Exception e) {
-                    throw new ParsingException("Error Parsing Upload Date: " + e.getMessage());
-                }
 
                 switch (kind) {
                     case BitchuteConstants.KIND_CHANNEL:
@@ -147,6 +146,25 @@ public class BitchuteSearchExtractor extends SearchExtractor {
                         break;
                     case BitchuteConstants.KIND_VIDEO:
                     default:
+                        final String textualDate = result.getString(jsonPublishedKey);
+                        final String views =
+                                BitchuteHelpers.getIntAlwaysAsString(result, jsonViewsKey);
+                        final String duration = result.getString(jsonDurationKey);
+                        final String videoId = result.getString("id");
+                        final String uploader = result.getString(jsonUploaderKey);
+                        final String uploaderUrl =
+                                BitchuteConstants.BASE_URL + result.getString(jsonUploaderUrlKey);
+
+                        DateWrapper uploadDate = null;
+                        // textualDate is sometimes null. Observation 20220812
+                        if (textualDate != null) {
+                            try {
+                                uploadDate = timeAgoParser.parse(textualDate);
+                            } catch (final Exception e) {
+                                throw new ParsingException("Error Parsing Upload Date: "
+                                        + e.getMessage());
+                            }
+                        }
                         infoItemExtractor = new BitchuteQuickStreamInfoItemExtractor(
                                 name,
                                 url,
@@ -162,7 +180,6 @@ public class BitchuteSearchExtractor extends SearchExtractor {
                                 ((BitchuteQuickStreamInfoItemExtractor) infoItemExtractor)
                                         .getDuration());
                 }
-
                 collector.commit(infoItemExtractor);
             }
         }

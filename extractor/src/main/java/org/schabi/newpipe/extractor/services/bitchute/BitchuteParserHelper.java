@@ -146,7 +146,7 @@ public final class BitchuteParserHelper {
         }
     }
 
-    public static JsonObject getSearchResultForQuery(final String query, final String kind,
+    public static JsonObject getSearchResultForQuery(final String query, final String sortQuery,
                                                      final int pageNumber)
             throws IOException, ExtractionException {
         if (!isInitDone()) {
@@ -154,10 +154,11 @@ public final class BitchuteParserHelper {
         }
 
         final String dataWithPlaceholders =
-                "csrfmiddlewaretoken=%s&query=%s&kind=%s&duration=&sort=&page=%d";
+                "csrfmiddlewaretoken=%s&query=%s%s&page=%d";
 
-        final byte[] data = String.format(dataWithPlaceholders, csrfToken, query, kind, pageNumber)
-                .getBytes(StandardCharsets.UTF_8);
+        final byte[] data =
+                String.format(dataWithPlaceholders, csrfToken, query, sortQuery, pageNumber)
+                        .getBytes(StandardCharsets.UTF_8);
         final Response response = getDownloader().post(
                 String.format("%s/api/search/list/", BitchuteConstants.BASE_URL),
                 getPostHeader(data.length),

@@ -170,7 +170,7 @@ public class BitchuteStreamExtractor extends StreamExtractor {
         try {
             final SearchInfo searchInfo = SearchInfo.getInfo(getService(),
                     getService().getSearchQHFactory()
-                            .fromQuery(getName(), Collections.emptyList(), ""));
+                            .fromQuery(getName(), Collections.emptyList(), null));
 
             final List<InfoItem> items = searchInfo.getRelatedItems();
             if (items.size() > 0 && items.get(0) instanceof StreamInfoItem) {
