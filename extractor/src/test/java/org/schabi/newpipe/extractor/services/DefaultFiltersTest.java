@@ -70,7 +70,7 @@ public abstract class DefaultFiltersTest {
      * Test {@link BaseSearchFilters#evaluateSelectedFilters(String)} with no content filters set.
      */
     @Test
-    void emptyContentFilterTest() {
+    public void emptyContentFilterTest() {
         final String expectation = emptyContentFilterTestSetup(searchFilterBase);
         final String result = searchFilterBase.evaluateSelectedFilters("test");
         assertEquals(expectation, result);
