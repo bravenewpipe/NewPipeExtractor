@@ -1,6 +1,6 @@
 plugins {
     id 'checkstyle'
-    id 'com.squareup.wire' version '4.5.2'
+    id 'com.squareup.wire' version '4.9.9'
 }
 
 test {
