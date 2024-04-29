@@ -30,7 +30,7 @@ allprojects {
         nanojsonVersion = "1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751"
         spotbugsVersion = "4.8.3"
         junitVersion = "5.10.2"
-        checkstyleVersion = "10.4"
+        checkstyleVersion = "10.16.0"
     }
 }
 
