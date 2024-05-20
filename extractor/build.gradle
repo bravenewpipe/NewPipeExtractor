@@ -52,5 +52,5 @@ dependencies {
 
     testImplementation "com.squareup.okhttp3:okhttp:3.12.13"
     testImplementation "com.squareup.okhttp3:okhttp-urlconnection:3.8.1"
-    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation 'com.google.code.gson:gson:2.11.0'
 }
