@@ -19,6 +19,7 @@ import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
+import org.schabi.newpipe.extractor.exceptions.PrivateContentException;
 import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.linkhandler.LinkHandler;
 import org.schabi.newpipe.extractor.localization.DateWrapper;
@@ -399,6 +400,7 @@ public class RumbleStreamExtractor extends StreamExtractor {
         final Response response = downloader.get(getUrl());
         doc = Jsoup.parse(response.responseBody(), getUrl());
 
+        checkIfVideoIsAccessible(response);
 
         final String queryUrl = "https://rumble.com/embedJS/u3/?request=video&ver=2&v="
                 + extractAndGetRealVideoId();
@@ -417,6 +419,18 @@ public class RumbleStreamExtractor extends StreamExtractor {
         } catch (final JsonParserException e) {
             e.printStackTrace();
             throw new ParsingException("Could not read json from: " + queryUrl);
+        }
+    }
+
+    private void checkIfVideoIsAccessible(final Response response) throws PrivateContentException {
+        if (response.responseCode() == 403) {
+            String errMsg = "This video is private.";
+            if (doc != null && doc.title() != null && !doc.title().isEmpty()) {
+                errMsg = doc.title();
+
+            }
+
+            throw new PrivateContentException(errMsg);
         }
     }
 
