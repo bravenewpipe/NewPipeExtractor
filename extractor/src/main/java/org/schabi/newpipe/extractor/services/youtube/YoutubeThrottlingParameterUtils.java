@@ -18,9 +18,25 @@ final class YoutubeThrottlingParameterUtils {
 
     private static final Pattern THROTTLING_PARAM_PATTERN = Pattern.compile("[&?]n=([^&]+)");
 
+    private static final String SINGLE_CHAR_VARIABLE_REGEX = "[a-zA-Z0-9$_]";
+
+    private static final String FUNCTION_NAME_REGEX = SINGLE_CHAR_VARIABLE_REGEX + "+";
+
+    private static final String ARRAY_ACCESS_REGEX = "\\[(\\d+)]";
+
+    /**
+     * Match this, where we want BDa
+     * Array access is optional, but needs to be handled, since the actual function is inside the
+     * array
+     * (b=String.fromCharCode(110),c=a.get(b))&&(c=<strong>BDa</strong><strong>[0]</strong>(c)
+     */
     private static final Pattern DEOBFUSCATION_FUNCTION_NAME_PATTERN = Pattern.compile(
             // CHECKSTYLE:OFF
-            "\\.get\\(\"n\"\\)\\)&&\\([a-zA-Z0-9$_]=([a-zA-Z0-9$_]+)(?:\\[(\\d+)])?\\([a-zA-Z0-9$_]\\)");
+            "\\(" + SINGLE_CHAR_VARIABLE_REGEX + "=String\\.fromCharCode\\(110\\),"
+                    + SINGLE_CHAR_VARIABLE_REGEX + "=" + SINGLE_CHAR_VARIABLE_REGEX + "\\.get\\("
+                    + SINGLE_CHAR_VARIABLE_REGEX + "\\)\\)" + "&&\\(" + SINGLE_CHAR_VARIABLE_REGEX
+                    + "=(" + FUNCTION_NAME_REGEX + ")" + "(?:" + ARRAY_ACCESS_REGEX + ")?\\("
+                    + SINGLE_CHAR_VARIABLE_REGEX + "\\)");
             // CHECKSTYLE:ON
 
     // Escape the curly end brace to allow compatibility with Android's regex engine
