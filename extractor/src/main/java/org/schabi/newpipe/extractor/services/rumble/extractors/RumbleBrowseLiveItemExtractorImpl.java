@@ -76,7 +76,7 @@ public class RumbleBrowseLiveItemExtractorImpl extends RumbleItemsExtractorImpl 
             throws ParsingException {
         return RumbleParsingHelper.extractSafely(true, "Could not extract the stream title",
                 () -> element.select(
-                        ".thumbnail__title.clamp-2").attr("title"));
+                        ".thumbnail__title").attr("title"));
     }
 
     @Override

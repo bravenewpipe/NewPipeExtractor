@@ -154,13 +154,15 @@ public final class RumbleParsingHelper {
 
         final String thumbnailUrl = totalMessMethodToGetUploaderThumbnailUrl(classStr, doc);
         if (thumbnailUrl == null) {
-            final String uploaderUrl = Rumble.getBaseUrl() + "/user/" + uploaderName;
+            final String uploaderUrl = Rumble.getBaseUrl() + "/user/" + uploaderName
+                    // remove all non alphanumeric characters except dash
+                    .replaceAll("[^a-zA-Z0-9\\-]", "");
             return uploaderUrl;
         }
 
         // Again another special case here
         final URL url = Utils.stringToURL(thumbnailUrl);
-        if (!url.getAuthority().contains("rmbl.ws")) {
+        if (!url.getAuthority().contains("rmbl.ws") && !url.getAuthority().contains("rumble")) {
             // there is no img hosted on rumble so we can't rely on it to extract the Channel.
             // So we try to use the name here too.
             final String uploaderUrl = Rumble.getBaseUrl() + "/user/" + uploaderName;

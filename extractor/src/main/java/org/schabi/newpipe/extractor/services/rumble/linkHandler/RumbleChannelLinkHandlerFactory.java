@@ -37,7 +37,9 @@ public class RumbleChannelLinkHandlerFactory extends ListLinkHandlerFactory {
     @Override
     public String getId(final String url) throws ParsingException {
         try {
-            final URL urlObj = Utils.stringToURL(url);
+            // toURI() method is important here as it ensures that any URL string
+            // complies with RC 2396
+            final URL urlObj = Utils.stringToURL(url).toURI().toURL();
             String path = urlObj.getPath();
 
             if (!Utils.isHTTP(urlObj)) { // TODO check if it is a rumble URL
@@ -52,13 +54,11 @@ public class RumbleChannelLinkHandlerFactory extends ListLinkHandlerFactory {
                 throw new ParsingException("the URL given is neither a channel nor an user");
             }
 
-            final String id = splitPath[1];
-
-            if (id == null || !id.matches("[A-Za-z0-9_-]+")) {
-                throw new ParsingException("The given id is not a Rumble-Channel-ID");
+            if (splitPath.length < 2 || splitPath[1] == null || splitPath[1].isEmpty()) {
+                throw new ParsingException("The given url has no channel-name/id. Url is: " + url);
             }
 
-            return splitPath[0] + "/" + id;
+            return splitPath[0] + "/" + splitPath[1];
         } catch (final Exception exception) {
             throw new ParsingException("Error could not parse url :" + exception.getMessage(),
                     exception);

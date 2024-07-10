@@ -107,7 +107,8 @@ public class RumbleSearchTrendingItemsExtractorImpl extends RumbleItemsExtractor
             throws ParsingException {
         return RumbleParsingHelper.extractSafely(true, "Could not extract the uploader name",
                 () -> element.select("address.video-item--by").first()
-                        .getElementsByTag("div").first().text());
+                        // using textNodes() to remove the <svg> tag
+                        .getElementsByTag("div").first().textNodes().get(0).text());
     }
 
     @SuppressWarnings("checkstyle:InvalidJavadocPosition")
