@@ -80,4 +80,8 @@ public abstract class SearchQueryHandlerFactory extends ListLinkHandlerFactory {
     public FilterItem getFilterItem(final int filterId) {
         return searchFilters.getFilterItem(filterId);
     }
+
+    public BaseSearchFilters getSearchFilters() {
+        return searchFilters;
+    }
 }

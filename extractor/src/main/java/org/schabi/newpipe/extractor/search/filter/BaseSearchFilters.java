@@ -153,13 +153,27 @@ public abstract class BaseSearchFilters {
     }
 
     /**
-     * Add the content filter groups that should be available
+     * Add the content filter groups that should be available.
      */
     protected void addContentFilterGroup(@Nonnull final FilterGroup filterGroup) {
         if (contentFilterGroups != null) {
             contentFilterGroups.add(filterGroup);
         } else {
             throw new RuntimeException("Never call this method after build()");
+        }
+    }
+
+    /**
+     * In case we other/additional data than just the URL to retrieve search results.
+     * @return the FilterItem that has the additional data.
+     * @param <T>
+     */
+    public <T extends FilterItem> T getFirstContentFilterItem() {
+
+        if (selectedContentFilter != null && !selectedContentFilter.isEmpty()) {
+            return (T) selectedContentFilter.get(0);
+        } else {
+            return null;
         }
     }
 }
