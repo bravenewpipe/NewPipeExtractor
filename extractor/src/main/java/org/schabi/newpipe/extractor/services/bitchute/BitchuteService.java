@@ -36,7 +36,8 @@ import org.schabi.newpipe.extractor.suggestion.SuggestionExtractor;
 import static java.util.Arrays.asList;
 import static org.schabi.newpipe.extractor.StreamingService.ServiceInfo.MediaCapability.COMMENTS;
 import static org.schabi.newpipe.extractor.StreamingService.ServiceInfo.MediaCapability.VIDEO;
-import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.RECOMMENDED_CHANNEL;
+import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.POPULAR;
+import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.SUGGESTED;
 import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.TRENDING_DAY;
 import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.TRENDING_MONTH;
 import static org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteKioskLinkHandlerFactory.TRENDING_WEEK;
@@ -139,8 +140,11 @@ public class BitchuteService extends StreamingService {
             list.addKioskEntry(trendingKioskExtractorFactory,
                     BitchuteKioskLinkHandlerFactory.getInstance(), TRENDING_MONTH);
 
-            list.addKioskEntry(recommendedChannelKioskExtractorFactory,
-                    BitchuteKioskLinkHandlerFactory.getInstance(), RECOMMENDED_CHANNEL);
+            list.addKioskEntry(trendingKioskExtractorFactory,
+                    BitchuteKioskLinkHandlerFactory.getInstance(), POPULAR);
+
+            list.addKioskEntry(trendingKioskExtractorFactory,
+                    BitchuteKioskLinkHandlerFactory.getInstance(), SUGGESTED);
             list.setDefaultKiosk(TRENDING_DAY);
         } catch (final Exception e) {
             throw new ExtractionException(e);

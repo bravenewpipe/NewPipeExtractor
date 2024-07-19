@@ -1,20 +1,15 @@
 package org.schabi.newpipe.extractor.services.bitchute.extractor;
 
-import org.jsoup.nodes.Element;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.channel.videos.Videos;
+
 import org.schabi.newpipe.extractor.Image;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.localization.DateWrapper;
-import org.schabi.newpipe.extractor.services.bitchute.BitchuteConstants;
-import org.schabi.newpipe.extractor.services.bitchute.misc.BitchuteHelpers;
+import org.schabi.newpipe.extractor.services.bitchute.BitchuteParserHelper;
 import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemExtractor;
 import org.schabi.newpipe.extractor.stream.StreamType;
-import org.schabi.newpipe.extractor.utils.Utils;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -22,14 +17,10 @@ import javax.annotation.Nullable;
 
 public abstract class BitchuteChannelStreamInfoItemExtractor implements StreamInfoItemExtractor {
 
-    private final Element element;
+    private final Videos video;
 
-    public BitchuteChannelStreamInfoItemExtractor(final Element element) {
-        this.element = element;
-
-        BitchuteHelpers.VideoDurationCache.extractVideoIdAndAddItToDurationCache(element,
-                this,
-                ".channel-videos-image-container a");
+    public BitchuteChannelStreamInfoItemExtractor(final Videos video) {
+        this.video = video;
     }
 
     @Override
@@ -44,57 +35,41 @@ public abstract class BitchuteChannelStreamInfoItemExtractor implements StreamIn
 
     @Override
     public long getDuration() throws ParsingException {
-        return YoutubeParsingHelper.parseDurationString(element.
-                select("span.video-duration").first().text());
+        return YoutubeParsingHelper.parseDurationString(video.getDuration());
     }
 
     @Override
     public long getViewCount() throws ParsingException {
-        return Utils.mixedNumberWordToLong(element.select("span.video-views").first().text());
+        return video.getViewCount();
     }
 
     @Nullable
     @Override
     public String getTextualUploadDate() throws ParsingException {
-        return element.select("div.channel-videos-details").first().text();
+        return video.getDatePublished();
     }
 
     @Nullable
     @Override
     public DateWrapper getUploadDate() throws ParsingException {
-
-        final Date date;
-        try {
-            final SimpleDateFormat df =
-                    new SimpleDateFormat("MMM dd, yyyy", BitchuteConstants.BITCHUTE_LOCALE);
-            date = df.parse(getTextualUploadDate());
-        } catch (final ParseException e) {
-            throw new ParsingException("Couldn't parse date:" + getTextualUploadDate());
-        }
-        final Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        return new DateWrapper(calendar);
+        return new DateWrapper(YoutubeParsingHelper.parseDateFrom(getTextualUploadDate()));
     }
 
     @Override
     public String getName() throws ParsingException {
-        return element.select("div.channel-videos-title").first().text();
+        return video.getVideoName();
     }
 
     @Override
     public String getUrl() throws ParsingException {
-        return element.select("div.channel-videos-title > a").first()
-                .absUrl("href");
+        return BitchuteParserHelper.prependBaseUrl(video.getVideoUrl());
     }
 
     @Nonnull
     @Override
     public List<Image> getThumbnails() throws ParsingException {
-        final String thumbnailUrl = element.select(
-                "div.channel-videos-image > img").first().absUrl("data-src");
-
         return List.of(
-                new Image(thumbnailUrl,
+                new Image(video.getThumbnailUrl(),
                         Image.HEIGHT_UNKNOWN,
                         Image.WIDTH_UNKNOWN,
                         Image.ResolutionLevel.UNKNOWN));

@@ -77,20 +77,6 @@ public class BitchuteTrendingKioskExtractorTest {
         }
     }
 
-    public static class RecommendedChannel extends Trending {
-        @BeforeAll
-        @SuppressWarnings("checkstyle:LineLength")
-        public static void setUp() throws Exception {
-            testDataMap = new HashMap() {{
-                put(KeysForTestDataMap.name, BitchuteKioskLinkHandlerFactory.RECOMMENDED_CHANNEL);
-                put(KeysForTestDataMap.id, BitchuteKioskLinkHandlerFactory.RECOMMENDED_CHANNEL);
-                put(KeysForTestDataMap.url, BitchuteConstants.BASE_URL + "/#Recommended Channels/");
-                put(KeysForTestDataMap.originalUrl, BitchuteConstants.BASE_URL + "/#Recommended Channels/");
-            }};
-            Trending.setUp();
-        }
-    }
-
     public abstract static class Trending implements BaseListExtractorTest {
 
         public enum KeysForTestDataMap {

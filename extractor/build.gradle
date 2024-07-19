@@ -22,6 +22,7 @@ checkstyle {
 checkstyleMain
         // exclude the wire generated youtube protobuf files
         .exclude ('org/schabi/newpipe/extractor/services/youtube/search/filter/protobuf/')
+        .exclude ('com/github/bravenewpipe/json2java4nanojson')
 
 wire {
     java {

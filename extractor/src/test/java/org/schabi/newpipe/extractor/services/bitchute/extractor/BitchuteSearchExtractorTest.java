@@ -10,11 +10,16 @@ import org.schabi.newpipe.extractor.Page;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
+import org.schabi.newpipe.extractor.search.filter.FilterContainer;
+import org.schabi.newpipe.extractor.search.filter.FilterGroup;
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.DefaultSearchExtractorTest;
 import org.schabi.newpipe.extractor.services.bitchute.BitchuteConstants;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -29,9 +34,28 @@ import static org.schabi.newpipe.extractor.ServiceList.Bitchute;
 public class BitchuteSearchExtractorTest {
 
 
+    private static List<FilterItem> defaultContentFilters;
+    private static List<FilterItem> defaultSortFilters;
+
+    private static void setDefaultContentAndSortFilters() {
+        final FilterContainer fc = Bitchute.getSearchQHFactory().getAvailableContentFilter();
+        final int defaultContentFilterItemId =
+                fc.getFilterGroups().get(0).getDefaultSelectedFilterId();
+        defaultContentFilters = List.of(fc.getFilterItem(defaultContentFilterItemId));
+
+        final List<FilterGroup> sortFilterGroups = Bitchute.getSearchQHFactory()
+                .getContentFilterSortFilterVariant(defaultContentFilterItemId).getFilterGroups();
+        defaultSortFilters = new ArrayList<>();
+        for (final FilterGroup sortFilterGroup : sortFilterGroups) {
+            defaultSortFilters.add(fc.getFilterItem(sortFilterGroup.getDefaultSelectedFilterId()));
+        }
+
+    }
+
     @BeforeAll
     public static void setUp() {
         NewPipe.init(DownloaderTestImpl.getInstance());
+        setDefaultContentAndSortFilters();
     }
 
     /**
@@ -44,7 +68,8 @@ public class BitchuteSearchExtractorTest {
         final String streamSearchQuery = "battle bus live | the way forward for london - trailer";
         final String expectedUploader = "London Real";
 
-        final SearchExtractor extractor = Bitchute.getSearchExtractor(streamSearchQuery);
+        final SearchExtractor extractor = Bitchute.getSearchExtractor(streamSearchQuery,
+                defaultContentFilters, defaultSortFilters);
 
         final ListExtractor.InfoItemsPage<InfoItem> page = extractor.getInitialPage();
         final StreamInfoItem searchResultItem = (StreamInfoItem) page.getItems().get(0);
@@ -63,9 +88,10 @@ public class BitchuteSearchExtractorTest {
     @Test
     public void testMultiplePages() throws ExtractionException, IOException {
         // A query practically guaranteed to have the maximum amount of pages
-        final SearchExtractor extractor = Bitchute.getSearchExtractor("battle");
+        final SearchExtractor extractor = Bitchute.getSearchExtractor("battle",
+                defaultContentFilters, defaultSortFilters);
 
-        final String expectedUrl = "https://www.bitchute.com/search/?kind=video&query=battle";
+        final String expectedUrl = "https://www.bitchute.com/search/?query=battle&kind=video";
 
         final ListExtractor.InfoItemsPage<InfoItem> infoItemsPage1 = extractor.getInitialPage();
         final Page page2 = infoItemsPage1.getNextPage();
@@ -85,7 +111,8 @@ public class BitchuteSearchExtractorTest {
         @BeforeAll
         public static void setUp() throws Exception {
             NewPipe.init(DownloaderTestImpl.getInstance());
-            extractor = Bitchute.getSearchExtractor(QUERY);
+            extractor = Bitchute.getSearchExtractor(QUERY,
+                    defaultContentFilters, defaultSortFilters);
             extractor.fetchPage();
         }
 

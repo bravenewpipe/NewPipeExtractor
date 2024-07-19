@@ -1,10 +1,13 @@
 package org.schabi.newpipe.extractor.services.bitchute.extractor;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.video.ResultsStreamVideo;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.video.counts.ResultsStreamVideoCounts;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.video.media.ResultsStreamVideoMedia;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.videos.ResultsStreamVideos;
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.videos.Videos;
+import com.grack.nanojson.JsonObject;
+
 import org.schabi.newpipe.extractor.Image;
-import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.MediaFormat;
 import org.schabi.newpipe.extractor.MetaInfo;
 import org.schabi.newpipe.extractor.StreamingService;
@@ -14,14 +17,11 @@ import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.LinkHandler;
 import org.schabi.newpipe.extractor.localization.DateWrapper;
-import org.schabi.newpipe.extractor.search.SearchInfo;
-import org.schabi.newpipe.extractor.services.bitchute.BitchuteConstants;
 import org.schabi.newpipe.extractor.services.bitchute.BitchuteParserHelper;
-import org.schabi.newpipe.extractor.services.bitchute.misc.BitchuteHelpers;
+import org.schabi.newpipe.extractor.services.youtube.YoutubeParsingHelper;
 import org.schabi.newpipe.extractor.stream.AudioStream;
 import org.schabi.newpipe.extractor.stream.Description;
 import org.schabi.newpipe.extractor.stream.StreamExtractor;
-import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
 import org.schabi.newpipe.extractor.stream.StreamSegment;
 import org.schabi.newpipe.extractor.stream.StreamType;
@@ -29,16 +29,9 @@ import org.schabi.newpipe.extractor.stream.SubtitlesStream;
 import org.schabi.newpipe.extractor.stream.VideoStream;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -47,12 +40,12 @@ import static org.schabi.newpipe.extractor.stream.Stream.ID_UNKNOWN;
 
 public class BitchuteStreamExtractor extends StreamExtractor {
 
-    private Document doc;
-    private BitchuteParserHelper.VideoCount videoCount;
-    private Elements relatedStreamAsElements;
-    private final Map<String, Integer> agemap = new HashMap() {{
-        put("Normal - Content that is suitable for ages 16 and over", 16);
-    }};
+    private ResultsStreamVideo streamVideoResults = null;
+    private ResultsStreamVideoMedia streamVideoMediaResults = null;
+
+    private ResultsStreamVideoCounts streamVideoViewCounts = null;
+
+    private ResultsStreamVideos streamVideosSuggested;
 
     public BitchuteStreamExtractor(final StreamingService service, final LinkHandler linkHandler) {
         super(service, linkHandler);
@@ -65,141 +58,102 @@ public class BitchuteStreamExtractor extends StreamExtractor {
                 getUrl(),
                 BitchuteParserHelper.getBasicHeader(), getExtractorLocalization());
 
-        BitchuteParserHelper.extractAndStoreCfAuth(getId(), response.responseBody());
-        doc = Jsoup.parse(response.responseBody(), getUrl());
-        videoCount = BitchuteParserHelper.getVideoCountObjectForStreamID(getId());
-        relatedStreamAsElements = doc.select(".video-card");
+        streamVideoResults = callApiAndGetResultsStreamVideo();
+        streamVideoMediaResults = callApiAndGetResultsStreamVideoMedia();
+        streamVideoViewCounts = callApiAndGetResultsStreamVideoCounts();
+        streamVideosSuggested = callApiAndGetResultsStreamVideos();
+    }
 
+    private ResultsStreamVideos callApiAndGetResultsStreamVideos()
+            throws ExtractionException, IOException {
+        final JsonObject streamVideoResultsJson = BitchuteParserHelper.callJsonDjangoApi(
+                JsonObject.builder()
+                        .value("selection", "suggested")
+                        .value("offset", 1)
+                        .value("limit", 20)
+                        .value("advertisable", true),
+                ResultsStreamVideos.ENDPOINT
+        );
+        return new ResultsStreamVideos(streamVideoResultsJson);
+    }
+
+    private ResultsStreamVideoCounts callApiAndGetResultsStreamVideoCounts()
+            throws ExtractionException, IOException {
+        final JsonObject streamVideoResultsJson = BitchuteParserHelper.callJsonDjangoApi(
+                JsonObject.builder().value("video_id", getId()),
+                ResultsStreamVideoCounts.ENDPOINT
+        );
+
+        return new ResultsStreamVideoCounts(streamVideoResultsJson);
+    }
+
+    private ResultsStreamVideoMedia callApiAndGetResultsStreamVideoMedia()
+            throws ExtractionException, IOException {
+        final JsonObject streamVideoResultsJson = BitchuteParserHelper.callJsonDjangoApi(
+                JsonObject.builder().value("video_id", getId()),
+                ResultsStreamVideoMedia.ENDPOINT
+        );
+        return new ResultsStreamVideoMedia(streamVideoResultsJson);
+    }
+
+    ResultsStreamVideo callApiAndGetResultsStreamVideo()
+            throws ExtractionException, IOException {
+        final JsonObject streamVideoResultsJson = BitchuteParserHelper.callJsonDjangoApi(
+                JsonObject.builder().value("video_id", getId()),
+                ResultsStreamVideo.ENDPOINT
+        );
+        return new ResultsStreamVideo(streamVideoResultsJson);
     }
 
     @Nonnull
     @Override
     public String getName() throws ParsingException {
-        try {
-            return doc.select("#video-title").first().text();
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing stream name");
-        }
+        return streamVideoResults.getVideoName();
     }
 
     @Nullable
     @Override
     public String getTextualUploadDate() throws ParsingException {
-        try {
-            return doc.select(".video-publish-date").first().text();
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing textual upload date");
-        }
+        return streamVideoResults.getDatePublished();
     }
 
     @Nullable
     @Override
     public DateWrapper getUploadDate() throws ParsingException {
-        final String textualDate = getTextualUploadDate()
-                .replaceAll("(?<=\\d)(st|nd|rd|th)", "").trim();
-        try {
-            final Date date;
-            try {
-                final SimpleDateFormat df = new SimpleDateFormat(
-                        "'First published at' HH:mm zzz 'on' MMM d, yyyy",
-                        BitchuteConstants.BITCHUTE_LOCALE);
-                date = df.parse(textualDate);
-            } catch (final ParseException e) {
-                throw new ParsingException("Couldn't parse Date: " + textualDate);
-            }
-            final Calendar calendar = Calendar.getInstance();
-            calendar.setTime(date);
-            return new DateWrapper(calendar);
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing upload date: " + textualDate);
-        }
+        return new DateWrapper(YoutubeParsingHelper.parseDateFrom(getTextualUploadDate()));
     }
 
     @Nonnull
     @Override
     public List<Image> getThumbnails() throws ParsingException {
-        try {
-            final String thumbUrl =
-                    doc.select("#player").first().attr("poster");
-            return List.of(new Image(thumbUrl,
-                    Image.HEIGHT_UNKNOWN, Image.WIDTH_UNKNOWN, Image.ResolutionLevel.UNKNOWN));
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing thumbnail url");
-        }
+        return List.of(new Image(streamVideoResults.getThumbnailUrl(),
+                Image.HEIGHT_UNKNOWN, Image.WIDTH_UNKNOWN, Image.ResolutionLevel.UNKNOWN));
     }
 
     @Nonnull
     @Override
     public Description getDescription() throws ParsingException {
-        try {
-            return new Description(doc.select("#video-description .full").first().html(),
-                    Description.HTML);
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing description");
-        }
+        return new Description(streamVideoResults.getDescription(), Description.HTML);
     }
 
     @Override
     public int getAgeLimit() throws ParsingException {
-        try {
-            return agemap.get(
-                    doc.select("#video-description + table tbody  td:nth-child(2) > a")
-                            .get(1).text());
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing age limit");
+        switch (streamVideoResults.getSensitivityId()) {
+            case "safe":
+                return StreamExtractor.NO_AGE_LIMIT;
+            case "normal":
+            default:
+                return 16;
+            case "nsfw":
+                return 18;
+            case "nsfl":
+                return 21;
         }
     }
 
     @Override
     public long getLength() throws ParsingException {
-        try {
-            // The duration is not easily extractable without using JavaScript
-            // at leas AFAIK. If you know a better way to extract the duration
-            // let me know.
-            //
-            // 1. workaround -- get duration from that was populated by
-            // BitchuteSearchExtractor, BitchuteTrendingStreamInfoItemExtractor,
-            // BitchuteChannelStreamInfoItemExtractor and store it into a cache.
-            return BitchuteHelpers.VideoDurationCache.getDurationForVideoId(getId());
-        } catch (final NoSuchElementException e) {
-            // 2. workaround -- search for the title on Bitchute and extract
-            // duration from search result and store it into the cache
-            return workAroundToGetDurationFromSearchResults();
-            // 3. TODO workaround -- could be a fix in Player in NewPipe
-            // that will extract the duration if possible from the video file
-        }
-    }
-
-    private long workAroundToGetDurationFromSearchResults() {
-        try {
-            final SearchInfo searchInfo = SearchInfo.getInfo(getService(),
-                    getService().getSearchQHFactory()
-                            .fromQuery(getName(), Collections.emptyList(), null));
-
-            final List<InfoItem> items = searchInfo.getRelatedItems();
-            if (items.size() > 0 && items.get(0) instanceof StreamInfoItem) {
-                for (final InfoItem item : items) {
-                    final StreamInfoItem infoItem = (StreamInfoItem) item;
-
-                    final String thatUrl  = infoItem.getUrl();
-                    final String extractedId = BitchuteHelpers.VideoDurationCache
-                            .extractVideoId(thatUrl);
-
-                    if (extractedId != null && getId().equals(extractedId)) {
-                        final long duration = infoItem.getDuration();
-                        BitchuteHelpers.VideoDurationCache.addDurationToMap(extractedId, duration);
-
-                        return duration;
-                    }
-                }
-
-                return -1; // evermind TODO is this valid?
-            }
-        } catch (final ExtractionException | IOException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
+        return YoutubeParsingHelper.parseDurationString(streamVideoResults.getDuration());
     }
 
     @Override
@@ -209,28 +163,25 @@ public class BitchuteStreamExtractor extends StreamExtractor {
 
     @Override
     public long getViewCount() {
-        return videoCount.getViewCount();
+        return streamVideoViewCounts.getViewCount();
     }
 
     @Override
     public long getLikeCount() {
-        return videoCount.getLikeCount();
+        return streamVideoViewCounts.getLikeCount();
     }
 
     @Override
     public long getDislikeCount() {
-        return videoCount.getDislikeCount();
+        return streamVideoViewCounts.getDislikeCount();
     }
 
     @Nullable
     @Override
     public StreamInfoItemsCollector getRelatedItems() throws ExtractionException {
         final StreamInfoItemsCollector collector = new StreamInfoItemsCollector(getServiceId());
-        for (int i = 1; i < relatedStreamAsElements.size(); i++) {
-            collector.commit(new BitchuteStreamRelatedInfoItemExtractor(
-                    getTimeAgoParser(), relatedStreamAsElements.get(i),
-                    getUploaderName(), getUploaderUrl()
-            ));
+        for (final Videos video : streamVideosSuggested.getVideos()) {
+            collector.commit(new BitchuteStreamRelatedInfoItemExtractor(video));
         }
         return collector;
     }
@@ -238,21 +189,13 @@ public class BitchuteStreamExtractor extends StreamExtractor {
     @Nonnull
     @Override
     public String getUploaderUrl() throws ParsingException {
-        try {
-            return doc.select("#video-watch  p.name a").first().absUrl("href");
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing uploader url");
-        }
+        return BitchuteParserHelper.prependBaseUrl(streamVideoResults.getChannel().getChannelUrl());
     }
 
     @Nonnull
     @Override
     public String getUploaderName() throws ParsingException {
-        try {
-            return doc.select("#video-watch  p.name").first().text();
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing upload name");
-        }
+        return streamVideoResults.getChannel().getChannelName();
     }
 
     @Override
@@ -263,14 +206,8 @@ public class BitchuteStreamExtractor extends StreamExtractor {
     @Nonnull
     @Override
     public List<Image> getUploaderAvatars() throws ParsingException {
-        try {
-            final String thumbnailUrl = doc.select("#video-watch div.image-container > a > img")
-                    .first().attr("data-src");
-            return List.of(new Image(thumbnailUrl,
-                    Image.HEIGHT_UNKNOWN, Image.WIDTH_UNKNOWN, Image.ResolutionLevel.UNKNOWN));
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing upload avatar url");
-        }
+        return List.of(new Image(streamVideoResults.getChannel().getThumbnailUrl(),
+                Image.HEIGHT_UNKNOWN, Image.WIDTH_UNKNOWN, Image.ResolutionLevel.UNKNOWN));
     }
 
     @Nonnull
@@ -305,7 +242,7 @@ public class BitchuteStreamExtractor extends StreamExtractor {
     @Override
     public List<VideoStream> getVideoStreams() throws ExtractionException {
         try {
-            final String videoUrl = doc.select("#player source").first().attr("src");
+            final String videoUrl = streamVideoMediaResults.getMediaUrl();
             final String extension = videoUrl.substring(videoUrl.lastIndexOf(".") + 1);
             final MediaFormat format = MediaFormat.getFromSuffix(extension);
 
@@ -344,11 +281,6 @@ public class BitchuteStreamExtractor extends StreamExtractor {
         return StreamType.VIDEO_STREAM;
     }
 
-    @Override
-    public String getErrorMessage() {
-        return null;
-    }
-
     @Nonnull
     @Override
     public String getHost() {
@@ -364,12 +296,7 @@ public class BitchuteStreamExtractor extends StreamExtractor {
     @Nonnull
     @Override
     public String getCategory() throws ParsingException {
-        try {
-            return doc.select("#video-description + table tbody  td:nth-child(2) > a")
-                    .first().text();
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing category");
-        }
+        return streamVideoResults.getCategoryId();
     }
 
     @Nonnull
@@ -387,7 +314,7 @@ public class BitchuteStreamExtractor extends StreamExtractor {
     @Nonnull
     @Override
     public List<String> getTags() {
-        return Collections.emptyList();
+        return streamVideoResults.getHashtags();
     }
 
     @Nonnull

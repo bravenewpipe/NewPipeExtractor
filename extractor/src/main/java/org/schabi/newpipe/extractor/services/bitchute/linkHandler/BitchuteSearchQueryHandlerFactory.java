@@ -11,6 +11,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public final class BitchuteSearchQueryHandlerFactory extends SearchQueryHandlerFactory {
 
     private static final BitchuteSearchQueryHandlerFactory INSTANCE =
@@ -26,11 +29,15 @@ public final class BitchuteSearchQueryHandlerFactory extends SearchQueryHandlerF
     }
 
     @Override
-    public String getUrl(final String query, final List<FilterItem> selectedContentFilter,
-                         final List<FilterItem> selectedSortFilter) throws ParsingException {
+    public String getUrl(
+            final String query,
+            @Nonnull final List<FilterItem> selectedContentFilter,
+            @Nullable final List<FilterItem> selectedSortFilter)
+            throws ParsingException {
 
         searchFilters.setSelectedContentFilter(selectedContentFilter);
         searchFilters.setSelectedSortFilter(selectedSortFilter);
+
         final String sortQuery = searchFilters.evaluateSelectedFilters(null);
 
         try {

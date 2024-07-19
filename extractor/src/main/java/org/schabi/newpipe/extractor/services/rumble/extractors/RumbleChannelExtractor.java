@@ -171,6 +171,6 @@ public class RumbleChannelExtractor extends ChannelExtractor {
         final Map<FilterItem, String> tab2Suffix =
                 RumbleChannelTabLinkHandlerFactory.getTab2UrlSuffixes();
 
-        return BraveNewPipeExtractorUtils.generateTabsFromSuffixMap(getUrl(), id, tab2Suffix);
+        return BraveNewPipeExtractorUtils.generateTabsFromSuffixMap(getUrl(), id, tab2Suffix, null);
     }
 }

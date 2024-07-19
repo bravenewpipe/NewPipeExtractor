@@ -1,9 +1,8 @@
 package org.schabi.newpipe.extractor.services.bitchute.linkHandler;
 
-import org.schabi.newpipe.extractor.search.filter.FilterItem;
-
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandlerFactory;
+import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.net.MalformedURLException;
@@ -13,17 +12,16 @@ import static org.schabi.newpipe.extractor.services.bitchute.BitchuteService.BIT
 
 public class BitchuteKioskLinkHandlerFactory extends ListLinkHandlerFactory {
 
+    public static final String TRENDING_DAY = "Trending Today";
+    public static final String TRENDING_MONTH = "Trending This Month";
+    public static final String TRENDING_WEEK = "Trending This Week";
+    public static final String POPULAR = "Popular";
+    public static final String SUGGESTED = "Suggested";
     public static BitchuteKioskLinkHandlerFactory instance = new BitchuteKioskLinkHandlerFactory();
 
     public static BitchuteKioskLinkHandlerFactory getInstance() {
         return instance;
     }
-
-    public static final String TRENDING_DAY = "Trending Today";
-    public static final String TRENDING_MONTH = "Trending This Month";
-    public static final String TRENDING_WEEK = "Trending This Week";
-    public static final String RECOMMENDED_CHANNEL = "Recommended Channels";
-
 
     @Override
     public String getId(final String url) throws ParsingException {

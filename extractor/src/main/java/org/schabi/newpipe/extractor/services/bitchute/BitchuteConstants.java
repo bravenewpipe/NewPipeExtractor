@@ -4,8 +4,6 @@ import java.util.Locale;
 
 public final class BitchuteConstants {
 
-    public static final String KIND_CHANNEL = "channel";
-    public static final String KIND_VIDEO = "video";
     public static final String BASE_URL = "https://www.bitchute.com";
     public static final String BASE_URL_VIDEO = BASE_URL + "/video";
     public static final String BASE_URL_CHANNEL = BASE_URL + "/channel";
@@ -17,7 +15,8 @@ public final class BitchuteConstants {
     public static final String SEARCH_URL_AUTOM = SEARCH_URL_PREFIX;
     public static final Locale BITCHUTE_LOCALE = Locale.ENGLISH;
     public static final String COMMENTS_URL = "https://commentfreely.bitchute.com";
-    public static final String BASE_RSS = BASE_URL + "/feeds/rss";
+
+    public static final String INITIAL_PAGE_NO = "0";
 
     private BitchuteConstants() {
     }

@@ -68,7 +68,8 @@ public class BitchuteChannelStreamInfoItemExtractorTest {
 
         final Elements videos = testInputHtmlMock.select(".channel-videos-container");
         for (final Element e : videos) {
-            channelStreamInfoExtractors.add(new BitchuteChannelStreamInfoItemExtractor(e) {
+            // TODO
+            channelStreamInfoExtractors.add(new BitchuteChannelStreamInfoItemExtractor(null) {
                 @Override
                 public String getUploaderName() throws ParsingException {
                     return testInputHelperJsonMock.getString("name");

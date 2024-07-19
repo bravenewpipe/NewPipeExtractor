@@ -1,5 +1,8 @@
 package org.schabi.newpipe.extractor.services.bitchute.extractor;
 
+import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.channel.ResultsStreamChannel;
+import com.grack.nanojson.JsonObject;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.schabi.newpipe.extractor.Image;
@@ -9,13 +12,12 @@ import org.schabi.newpipe.extractor.downloader.Downloader;
 import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
+import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler;
 import org.schabi.newpipe.extractor.search.filter.FilterItem;
-import org.schabi.newpipe.extractor.services.bitchute.BitchuteConstants;
 import org.schabi.newpipe.extractor.services.bitchute.BitchuteParserHelper;
 import org.schabi.newpipe.extractor.services.bitchute.linkHandler.BitchuteChannelTabLinkHandlerFactory;
 import org.schabi.newpipe.extractor.utils.BraveNewPipeExtractorUtils;
-import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -25,9 +27,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 
 public class BitchuteChannelExtractor extends ChannelExtractor {
-    private Document doc;
-    private String channelName;
-    private String avatarUrl;
+    private ResultsStreamChannel channelData;
 
     public BitchuteChannelExtractor(final StreamingService service,
                                     final ListLinkHandler linkHandler) {
@@ -37,12 +37,27 @@ public class BitchuteChannelExtractor extends ChannelExtractor {
     @Override
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
-        final Response response = getDownloader().get(getUrl(),
-                BitchuteParserHelper.getBasicHeader());
-        doc = Jsoup.parse(response.responseBody(), getUrl());
+        final String channelId = getChannelID();
+        if (channelData == null) {
+            channelData = callApiAndGetResultsStreamChannel(channelId);
+        }
     }
 
-    private String getChannelID() {
+    public ResultsStreamChannel callApiAndGetResultsStreamChannel(
+            final String channelId)
+            throws ExtractionException, IOException {
+        final JsonObject streamVideoResultsJson = BitchuteParserHelper.callJsonDjangoApi(
+                JsonObject.builder().value("channel_id", channelId),
+                ResultsStreamChannel.ENDPOINT);
+        return new ResultsStreamChannel(streamVideoResultsJson);
+    }
+
+    private String getChannelID() throws IOException, ReCaptchaException, ParsingException {
+        // TODO we should retrieve the ChannelId from somewhere else.
+        // so we do not need to fetch doc and can start by calling just the API
+        final Response response = getDownloader().get(getUrl(),
+                BitchuteParserHelper.getBasicHeader());
+        final Document doc = Jsoup.parse(response.responseBody(), getUrl());
         final String canonicalUrl = doc.getElementById("canonical").attr("href");
         final String[] urlSegments = canonicalUrl.split("/");
         return urlSegments[urlSegments.length - 1];
@@ -51,40 +66,22 @@ public class BitchuteChannelExtractor extends ChannelExtractor {
     @Nonnull
     @Override
     public String getName() throws ParsingException {
-        if (channelName == null) {
-            channelName = BitchuteParserHelper.getChannelName(doc);
-        }
-        return channelName;
+        return channelData.getChannelName();
     }
 
     @Nonnull
     @Override
     public List<Image> getAvatars() throws ParsingException {
-        try {
-            if (avatarUrl == null) {
-                avatarUrl = doc.select("#page-bar > div > div > div.image-container > img")
-                        .first().attr("data-src");
-                if (avatarUrl.startsWith("/")) {
-                    avatarUrl = BitchuteConstants.BASE_URL + avatarUrl;
-                }
-            }
-            return List.of(
-                    new Image(avatarUrl,
-                            Image.HEIGHT_UNKNOWN,
-                            Image.WIDTH_UNKNOWN,
-                            Image.ResolutionLevel.UNKNOWN));
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing Channel Avatar Url");
-        }
+        return List.of(
+                new Image(channelData.getThumbnailUrl(),
+                        Image.HEIGHT_UNKNOWN,
+                        Image.WIDTH_UNKNOWN,
+                        Image.ResolutionLevel.UNKNOWN));
     }
 
     @Override
     public String getDescription() throws ParsingException {
-        try {
-            return doc.select("#channel-description").first().text();
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing Channel Description");
-        }
+        return channelData.getDescription();
     }
 
     @Override
@@ -116,17 +113,13 @@ public class BitchuteChannelExtractor extends ChannelExtractor {
         final Map<FilterItem, String> tab2Suffix =
                 BitchuteChannelTabLinkHandlerFactory.getTab2UrlSuffixes();
 
-        return BraveNewPipeExtractorUtils.generateTabsFromSuffixMap(getUrl(), id, tab2Suffix);
+        return BraveNewPipeExtractorUtils
+                .generateTabsFromSuffixMap(getUrl(), id, tab2Suffix, channelData);
     }
 
     @Override
     public long getSubscriberCount() throws ParsingException {
-        try {
-            return Utils.mixedNumberWordToLong(BitchuteParserHelper
-                    .getSubscriberCountForChannelID(getChannelID()));
-        } catch (final Exception e) {
-            throw new ParsingException("Error parsing Channel Subscribers");
-        }
+        return channelData.getSubscriberCount();
     }
 
     @Nonnull
