@@ -10,7 +10,6 @@ import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.bandcamp.search.filter.BandcampFilters;
 import org.schabi.newpipe.extractor.utils.Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -39,11 +38,6 @@ public final class BandcampSearchQueryHandlerFactory extends SearchQueryHandlerF
         searchFilters.setSelectedContentFilter(selectedContentFilter);
 
         final String filterQuery = searchFilters.evaluateSelectedContentFilters();
-        try {
-            return BASE_URL + "/search?q=" + Utils.encodeUrlUtf8(query)
-                    + filterQuery + "&page=1";
-        } catch (final UnsupportedEncodingException e) {
-            throw new ParsingException("query \"" + query + "\" could not be encoded", e);
-        }
+        return BASE_URL + "/search?q=" + Utils.encodeUrlUtf8(query) + filterQuery + "&page=1";
     }
 }

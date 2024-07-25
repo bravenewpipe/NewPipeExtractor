@@ -37,7 +37,8 @@ public final class BandcampChannelLinkHandlerFactory extends ListLinkHandlerFact
     @Override
     public String getId(final String url) throws ParsingException, UnsupportedOperationException {
         try {
-            final String response = NewPipe.getDownloader().get(url).responseBody();
+            final String response = NewPipe.getDownloader().get(Utils.replaceHttpWithHttps(url))
+                    .responseBody();
 
             // Use band data embedded in website to extract ID
             final JsonObject bandData = JsonUtils.getJsonData(response, "data-band");
@@ -96,7 +97,7 @@ public final class BandcampChannelLinkHandlerFactory extends ListLinkHandlerFact
             }
 
             // Test whether domain is supported
-            return BandcampExtractorHelper.isSupportedDomain(lowercaseUrl);
+            return BandcampExtractorHelper.isArtistDomain(lowercaseUrl);
         }
     }
 }

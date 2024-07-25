@@ -8,7 +8,6 @@ import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.peertube.PeertubeHelpers;
 import org.schabi.newpipe.extractor.services.peertube.search.filter.PeertubeFilters;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,18 +55,13 @@ public final class PeertubeSearchQueryHandlerFactory extends SearchQueryHandlerF
                          final List<FilterItem> selectedSortFilter,
                          final String baseUrl)
             throws ParsingException, UnsupportedOperationException {
-        try {
-            searchFilters.setSelectedSortFilter(selectedSortFilter);
-            searchFilters.setSelectedContentFilter(selectedContentFilter);
+        searchFilters.setSelectedSortFilter(selectedSortFilter);
+        searchFilters.setSelectedContentFilter(selectedContentFilter);
 
-            final String filterQuery = searchFilters.evaluateSelectedFilters(null);
+        final String filterQuery = searchFilters.evaluateSelectedFilters(null);
 
-            final String endpoint = getContentFilterDependingEndpoint(selectedContentFilter);
-            return baseUrl + endpoint + "?search=" + Utils.encodeUrlUtf8(searchString)
-                    + filterQuery;
-        } catch (final UnsupportedEncodingException e) {
-            throw new ParsingException("Could not encode query", e);
-        }
+        final String endpoint = getContentFilterDependingEndpoint(selectedContentFilter);
+        return baseUrl + endpoint + "?search=" + Utils.encodeUrlUtf8(searchString) + filterQuery;
     }
 
     private boolean isSepiaContentFilterPresent(

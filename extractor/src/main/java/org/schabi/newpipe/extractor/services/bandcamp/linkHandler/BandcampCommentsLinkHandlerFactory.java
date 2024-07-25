@@ -5,6 +5,7 @@ import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandlerFactory;
 import org.schabi.newpipe.extractor.services.bandcamp.extractors.BandcampExtractorHelper;
+import org.schabi.newpipe.extractor.utils.Utils;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public final class BandcampCommentsLinkHandlerFactory extends ListLinkHandlerFac
 
     @Override
     public String getId(final String url) throws ParsingException, UnsupportedOperationException {
-        return url;
+        return Utils.replaceHttpWithHttps(url);
     }
 
     @Override
@@ -44,7 +45,7 @@ public final class BandcampCommentsLinkHandlerFactory extends ListLinkHandlerFac
         }
 
         // Test whether domain is supported
-        return BandcampExtractorHelper.isSupportedDomain(url);
+        return BandcampExtractorHelper.isArtistDomain(url);
     }
 
     @Override
@@ -52,6 +53,6 @@ public final class BandcampCommentsLinkHandlerFactory extends ListLinkHandlerFac
                          @Nonnull final List<FilterItem> contentFilter,
                          @Nullable final List<FilterItem> sortFilter)
             throws ParsingException, UnsupportedOperationException {
-        return id;
+        return Utils.replaceHttpWithHttps(id);
     }
 }
