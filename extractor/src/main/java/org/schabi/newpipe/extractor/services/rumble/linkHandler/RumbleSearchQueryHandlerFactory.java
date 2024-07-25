@@ -6,7 +6,6 @@ import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.rumble.search.filter.RumbleFilters;
 import org.schabi.newpipe.extractor.utils.Utils;
 
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 public final class RumbleSearchQueryHandlerFactory extends SearchQueryHandlerFactory {
@@ -36,13 +35,6 @@ public final class RumbleSearchQueryHandlerFactory extends SearchQueryHandlerFac
         final String sortQuery = searchFilters.evaluateSelectedSortFilters();
         final String urlEndpoint = searchFilters.evaluateSelectedContentFilters();
 
-
-        try {
-            return urlEndpoint
-                    + Utils.encodeUrlUtf8(searchString)
-                    + sortQuery;
-        } catch (final UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+        return urlEndpoint + Utils.encodeUrlUtf8(searchString) + sortQuery;
     }
 }
