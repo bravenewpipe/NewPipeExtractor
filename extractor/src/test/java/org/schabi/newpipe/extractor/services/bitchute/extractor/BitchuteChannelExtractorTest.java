@@ -40,9 +40,19 @@ public class BitchuteChannelExtractorTest {
                 put(KeysForTestDataMap.expectedChannelName, "Mark Dice");
                 put(KeysForTestDataMap.expectedId, "u3QMwGD7bSW6");
                 put(KeysForTestDataMap.expectedMinSubscriberCount, "70000");
-                put(KeysForTestDataMap.expectedDescription, "Mark Dice - Exposing liberal lunatics, celebrity scum, mainstream media manipulation, and social justice warrior psychos. BEST CONSERVATIVE CHANNEL ON BITCHUTE.");
-                put(KeysForTestDataMap.expectedAvatarUrl, "ePTmphLaTzTvJgILYVieZtEv_small.jpg");
-                put(KeysForTestDataMap.expectedBannerlUrl, "ePTmphLaTzTvJgILYVieZtEv_small.jpg");
+                put(KeysForTestDataMap.expectedDescription, "Exposing liberal lunatics, celebrity scum, mainstream media manipulation");
+                put(KeysForTestDataMap.expectedAvatarUrl, "["
+                                + "{\"hasImage\":"
+                                + /* ===expected to have image? ===*/
+                                "true"
+                                + ",\"url\":\""
+                                + /* ===set the expected url=== */
+                                "ePTmphLaTzTvJgILYVieZtEv_"
+                                + "\"}"
+                                + "]"
+                );
+                put(KeysForTestDataMap.expectedBannerlUrl,
+                        get(KeysForTestDataMap.expectedAvatarUrl));
                 put(KeysForTestDataMap.doTestMoreRelatedItems, "true");
             }};
             TestChannel.setUp();
@@ -73,7 +83,7 @@ public class BitchuteChannelExtractorTest {
                     "true"
                     + ",\"url\":\""
                     + /* ===set the expected url=== */
-                    "2fqQXi6GCbgyrXaPQ540PLNu_small.jpg"
+                    "2fqQXi6GCbgyrXaPQ540PLNu_"
                     + "\"}"
                     + "]"
             );

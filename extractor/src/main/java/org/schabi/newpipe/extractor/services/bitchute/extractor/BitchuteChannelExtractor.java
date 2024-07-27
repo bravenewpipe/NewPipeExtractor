@@ -3,16 +3,12 @@ package org.schabi.newpipe.extractor.services.bitchute.extractor;
 import com.github.bravenewpipe.json2java4nanojson.bitchute.api.results.stream.channel.ResultsStreamChannel;
 import com.grack.nanojson.JsonObject;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.schabi.newpipe.extractor.Image;
 import org.schabi.newpipe.extractor.StreamingService;
 import org.schabi.newpipe.extractor.channel.ChannelExtractor;
 import org.schabi.newpipe.extractor.downloader.Downloader;
-import org.schabi.newpipe.extractor.downloader.Response;
 import org.schabi.newpipe.extractor.exceptions.ExtractionException;
 import org.schabi.newpipe.extractor.exceptions.ParsingException;
-import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
 import org.schabi.newpipe.extractor.linkhandler.ListLinkHandler;
 import org.schabi.newpipe.extractor.search.filter.FilterItem;
 import org.schabi.newpipe.extractor.services.bitchute.BitchuteParserHelper;
@@ -52,14 +48,8 @@ public class BitchuteChannelExtractor extends ChannelExtractor {
         return new ResultsStreamChannel(streamVideoResultsJson);
     }
 
-    private String getChannelID() throws IOException, ReCaptchaException, ParsingException {
-        // TODO we should retrieve the ChannelId from somewhere else.
-        // so we do not need to fetch doc and can start by calling just the API
-        final Response response = getDownloader().get(getUrl(),
-                BitchuteParserHelper.getBasicHeader());
-        final Document doc = Jsoup.parse(response.responseBody(), getUrl());
-        final String canonicalUrl = doc.getElementById("canonical").attr("href");
-        final String[] urlSegments = canonicalUrl.split("/");
+    private String getChannelID() throws ParsingException {
+        final String[] urlSegments = getUrl().split("/");
         return urlSegments[urlSegments.length - 1];
     }
 
