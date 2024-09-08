@@ -69,7 +69,6 @@ public class RumbleStreamExtractor extends StreamExtractor {
 
     private Document doc;
     JsonObject embedJsonStreamInfoObj;
-    private String realVideoId = null;
 
     private int ageLimit = -1;
     private List<VideoStream> videoStreams;
@@ -398,12 +397,13 @@ public class RumbleStreamExtractor extends StreamExtractor {
             throws IOException, ExtractionException {
 
         final Response response = downloader.get(getUrl());
-        doc = Jsoup.parse(response.responseBody(), getUrl());
+        final String rb = response.responseBody();
+        doc = Jsoup.parse(rb, getUrl());
 
         checkIfVideoIsAccessible(response);
 
-        final String queryUrl = "https://rumble.com/embedJS/u3/?request=video&ver=2&v="
-                + extractAndGetRealVideoId();
+        final String queryUrl = "https://rumble.com/embedJS/u3/?request=video&ver=2&v=v"
+                + RumbleParsingHelper.getEmbedVideoId(rb);
 
         final Response response2 = downloader.get(
                 queryUrl);
@@ -502,35 +502,6 @@ public class RumbleStreamExtractor extends StreamExtractor {
     @Override
     public List<SubtitlesStream> getSubtitles(final MediaFormat format) {
         return Collections.emptyList();
-    }
-
-    private String extractAndGetRealVideoId() {
-        if (realVideoId != null) {
-            return realVideoId;
-        }
-
-        final String jsonString =
-                doc.getElementsByAttributeValueContaining("type", "application/ld+json")
-                        .first().childNodes().get(0).toString();
-
-        // extract the internal video id for a rumble video
-        final JsonArray jsonObj;
-        try {
-            jsonObj = JsonParser.array().from(jsonString);
-            final String embedUrl = jsonObj.getObject(0).getString("embedUrl");
-
-
-            final URL url = Utils.stringToURL(embedUrl);
-            final String[] splitPaths = url.getPath().split("/");
-
-            if (splitPaths.length == 3 && splitPaths[1].equalsIgnoreCase("embed")) {
-                realVideoId = splitPaths[2];
-            }
-
-        } catch (final MalformedURLException | JsonParserException e) {
-            e.printStackTrace();
-        }
-        return realVideoId;
     }
 
     private long getLiveViewCount() throws ParsingException {

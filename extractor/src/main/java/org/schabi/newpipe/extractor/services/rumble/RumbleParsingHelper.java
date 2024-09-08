@@ -218,4 +218,17 @@ public final class RumbleParsingHelper {
         }
         return HEADERS;
     }
+
+    public static String getEmbedVideoId(final String rb) {
+        final String VALID_URL = "https?://(?:www\\.)?rumble\\.com/embed/(?:[0-9a-z]+\\.)?(?<id>[0-9a-z]+)";
+        final String EMBED_REGEX = "(?:<(?:script|iframe)[^>]+\\bsrc=|[\"']embedUrl[\"']\\s*:\\s*)[\"'](?<url>" + VALID_URL + ")";
+        Pattern pattern = Pattern.compile(EMBED_REGEX);
+        Matcher matcher = pattern.matcher(rb);
+        if (matcher.find()) {
+            // Remove v (first character) from the id
+            return matcher.group(2).substring(1);
+        } else {
+            return null;
+        }
+    }
 }
