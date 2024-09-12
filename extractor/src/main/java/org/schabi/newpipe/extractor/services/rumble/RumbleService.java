@@ -17,11 +17,13 @@ import org.schabi.newpipe.extractor.playlist.PlaylistExtractor;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
 import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleChannelExtractor;
 import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleChannelTabExtractor;
+import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleCommentsExtractor;
 import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleSearchExtractor;
 import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleStreamExtractor;
 import org.schabi.newpipe.extractor.services.rumble.extractors.RumbleTrendingExtractor;
 import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleChannelLinkHandlerFactory;
 import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleChannelTabLinkHandlerFactory;
+import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleCommentsLinkHandlerFactory;
 import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleSearchQueryHandlerFactory;
 import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleStreamLinkHandlerFactory;
 import org.schabi.newpipe.extractor.services.rumble.linkHandler.RumbleTrendingLinkHandlerFactory;
@@ -36,7 +38,8 @@ public class RumbleService extends StreamingService {
 
     public RumbleService(final int id) {
         super(id, "Rumble", asList(ServiceInfo.MediaCapability.VIDEO,
-                ServiceInfo.MediaCapability.AUDIO, ServiceInfo.MediaCapability.LIVE));
+                ServiceInfo.MediaCapability.AUDIO, ServiceInfo.MediaCapability.COMMENTS,
+                ServiceInfo.MediaCapability.LIVE));
     }
 
     @Override
@@ -138,12 +141,12 @@ public class RumbleService extends StreamingService {
 
     @Override
     public ListLinkHandlerFactory getCommentsLHFactory() {
-        return null;
+        return RumbleCommentsLinkHandlerFactory.getInstance();
     }
 
     @Override
     public CommentsExtractor getCommentsExtractor(final ListLinkHandler urlIdHandler)
             throws ExtractionException {
-        return null;
+        return new RumbleCommentsExtractor(this, urlIdHandler);
     }
 }
