@@ -29,6 +29,7 @@ import static org.schabi.newpipe.extractor.ListExtractor.ITEM_COUNT_UNKNOWN;
 public class RumbleChannelExtractor extends ChannelExtractor {
 
     private Document doc;
+    private Document about;
 
     public RumbleChannelExtractor(final StreamingService service,
                                   final ListLinkHandler linkHandler) {
@@ -39,6 +40,13 @@ public class RumbleChannelExtractor extends ChannelExtractor {
     public void onFetchPage(@Nonnull final Downloader downloader)
             throws IOException, ExtractionException {
         doc = Jsoup.parse(getDownloader().get(getUrl()).responseBody());
+        final String about_link = RumbleParsingHelper.extractSafely(false,
+            "",
+            () -> doc.select("div.channel-subheader--menu a[href*='about']").first().attr("href")
+        );
+        if (null != about_link) {
+            about = Jsoup.parse(getDownloader().get(getService().getBaseUrl() + about_link).responseBody());
+        }
     }
 
     @Nonnull
@@ -119,7 +127,7 @@ public class RumbleChannelExtractor extends ChannelExtractor {
 
         final String viewCount = RumbleParsingHelper.extractSafely(true,
                 errorMsg,
-                () -> doc.select("span.channel-header--followers").first().text()
+                () -> doc.select("div.channel-header--title > span").first().text()
         );
 
         if (null != viewCount) {
@@ -135,7 +143,22 @@ public class RumbleChannelExtractor extends ChannelExtractor {
 
     @Override
     public String getDescription() throws ParsingException {
-        return ""; // There is no description
+        if (null != about) {
+            try {
+                StringBuilder sb = new StringBuilder();
+                org.jsoup.select.Elements el = about.select("div.channel-about--description > p");
+                for (int i = 0; i < el.size(); i++) {
+                    sb.append(el.get(i).text());
+                    if (i < el.size() - 1) {
+                        sb.append("\n\n");
+                    }
+                }
+                return sb.toString();
+            } catch (final Exception e) {
+                throw new ParsingException("Could not get description: " + e);
+            }
+        }
+        return "";
     }
 
     @Override
