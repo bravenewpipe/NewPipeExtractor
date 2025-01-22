@@ -20,12 +20,18 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * A {@link StreamInfoItemExtractor} for YouTube's {@code reelItemRenderers}.
+ * A {@link StreamInfoItemExtractor} for YouTube's {@code reelItemRenderer}s.
  *
  * <p>
- * {@code reelItemRenderers} are returned on YouTube for their short-form contents on almost every
+ * {@code reelItemRenderer}s were returned on YouTube for their short-form contents on almost every
  * place and every major client. They provide a limited amount of information and do not provide
  * the exact view count, any uploader info (name, URL, avatar, verified status) and the upload date.
+ * </p>
+ *
+ * <p>
+ * At the time this documentation has been updated, they are being replaced by
+ * {@code shortsLockupViewModel}s. See {@link YoutubeShortsLockupInfoItemExtractor} for an
+ * extractor for this new UI data type.
  * </p>
  */
 public class YoutubeReelInfoItemExtractor implements StreamInfoItemExtractor {

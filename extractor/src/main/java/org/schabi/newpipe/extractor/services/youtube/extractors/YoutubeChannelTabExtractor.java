@@ -43,30 +43,15 @@ import static org.schabi.newpipe.extractor.utils.Utils.isNullOrEmpty;
  */
 public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
 
-    /**
-     * Whether the visitor data extracted from the initial channel response is required to be used
-     * for continuations.
-     *
-     * <p>
-     * A valid {@code visitorData} is required to get continuations of shorts in channels.
-     * </p>
-     *
-     * <p>
-     * It should be not used when it is not needed, in order to reduce YouTube's tracking.
-     * </p>
-     */
-    private final boolean useVisitorData;
+    @Nullable
+    protected YoutubeChannelHelper.ChannelHeader channelHeader;
+
     private JsonObject jsonResponse;
     private String channelId;
-    @Nullable
-    private String visitorData;
-    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-    protected Optional<YoutubeChannelHelper.ChannelHeader> channelHeader;
 
     public YoutubeChannelTabExtractor(final StreamingService service,
                                       final ListLinkHandler linkHandler) {
         super(service, linkHandler);
-        useVisitorData = getChannelTabType().equals(ChannelTabs.SHORTS);
     }
 
     @Nonnull
@@ -99,9 +84,6 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
         jsonResponse = data.jsonResponse;
         channelHeader = YoutubeChannelHelper.getChannelHeader(jsonResponse);
         channelId = data.channelId;
-        if (useVisitorData) {
-            visitorData = jsonResponse.getObject("responseContext").getString("visitorData");
-        }
     }
 
     @Nonnull
@@ -122,9 +104,9 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
     }
 
     protected String getChannelName() throws ParsingException {
-        return YoutubeChannelHelper.getChannelName(
-                channelHeader, jsonResponse,
-                YoutubeChannelHelper.getChannelAgeGateRenderer(jsonResponse));
+        return YoutubeChannelHelper.getChannelName(channelHeader,
+                YoutubeChannelHelper.getChannelAgeGateRenderer(jsonResponse),
+                jsonResponse);
     }
 
     @Nonnull
@@ -158,11 +140,14 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
             }
         }
 
-        final VerifiedStatus verifiedStatus = channelHeader.flatMap(header ->
-                        YoutubeChannelHelper.isChannelVerified(header)
-                                ? Optional.of(VerifiedStatus.VERIFIED)
-                                : Optional.of(VerifiedStatus.UNVERIFIED))
-                .orElse(VerifiedStatus.UNKNOWN);
+        final VerifiedStatus verifiedStatus;
+        if (channelHeader == null) {
+            verifiedStatus = VerifiedStatus.UNKNOWN;
+        } else {
+            verifiedStatus = YoutubeChannelHelper.isChannelVerified(channelHeader)
+                    ? VerifiedStatus.VERIFIED
+                    : VerifiedStatus.UNVERIFIED;
+        }
 
         // If a channel tab is fetched, the next page requires channel ID and name, as channel
         // streams don't have their channel specified.
@@ -175,10 +160,8 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
                 channelName, channelUrl)
                 .orElse(null);
 
-        final Page nextPage = getNextPageFrom(continuation,
-                useVisitorData && !isNullOrEmpty(visitorData)
-                        ? List.of(channelName, channelUrl, verifiedStatus.toString(), visitorData)
-                        : List.of(channelName, channelUrl, verifiedStatus.toString()));
+        final Page nextPage = getNextPageFrom(
+                continuation, List.of(channelName, channelUrl, verifiedStatus.toString()));
 
         return new InfoItemsPage<>(collector, nextPage);
     }
@@ -299,6 +282,9 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
             } else if (richItem.has("reelItemRenderer")) {
                 commitReel(collector, richItem.getObject("reelItemRenderer"),
                         channelVerifiedStatus, channelName, channelUrl);
+            } else if (richItem.has("shortsLockupViewModel")) {
+                commitShortsLockup(collector, richItem.getObject("shortsLockupViewModel"),
+                        channelVerifiedStatus, channelName, channelUrl);
             } else if (richItem.has("playlistRenderer")) {
                 commitPlaylist(collector, richItem.getObject("playlistRenderer"),
                         channelVerifiedStatus, channelName, channelUrl);
@@ -325,6 +311,12 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
         } else if (item.has("expandedShelfContentsRenderer")) {
             return collectItemsFrom(collector, item.getObject("expandedShelfContentsRenderer")
                     .getArray("items"), channelVerifiedStatus, channelName, channelUrl);
+        } else if (item.has("lockupViewModel")) {
+            final JsonObject lockupViewModel = item.getObject("lockupViewModel");
+            if ("LOCKUP_CONTENT_TYPE_PLAYLIST".equals(lockupViewModel.getString("contentType"))) {
+                commitPlaylistLockup(collector, lockupViewModel, channelVerifiedStatus,
+                        channelName, channelUrl);
+            }
         } else if (item.has("continuationItemRenderer")) {
             return Optional.ofNullable(item.getObject("continuationItemRenderer"));
         }
@@ -352,6 +344,61 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
                     @Override
                     public boolean isUploaderVerified() {
                         return channelVerifiedStatus == VerifiedStatus.VERIFIED;
+                    }
+                });
+    }
+
+    private static void commitShortsLockup(@Nonnull final MultiInfoItemsCollector collector,
+                                           @Nonnull final JsonObject shortsLockupViewModel,
+                                           @Nonnull final VerifiedStatus channelVerifiedStatus,
+                                           @Nullable final String channelName,
+                                           @Nullable final String channelUrl) {
+        collector.commit(
+                new YoutubeShortsLockupInfoItemExtractor(shortsLockupViewModel) {
+                    @Override
+                    public String getUploaderName() throws ParsingException {
+                        return isNullOrEmpty(channelName) ? super.getUploaderName() : channelName;
+                    }
+
+                    @Override
+                    public String getUploaderUrl() throws ParsingException {
+                        return isNullOrEmpty(channelUrl) ? super.getUploaderName() : channelUrl;
+                    }
+
+                    @Override
+                    public boolean isUploaderVerified() {
+                        return channelVerifiedStatus == VerifiedStatus.VERIFIED;
+                    }
+                });
+    }
+
+    private void commitPlaylistLockup(@Nonnull final MultiInfoItemsCollector collector,
+                                      @Nonnull final JsonObject playlistLockupViewModel,
+                                      @Nonnull final VerifiedStatus channelVerifiedStatus,
+                                      @Nullable final String channelName,
+                                      @Nullable final String channelUrl) {
+        collector.commit(
+                new YoutubeMixOrPlaylistLockupInfoItemExtractor(playlistLockupViewModel) {
+                    @Override
+                    public String getUploaderName() throws ParsingException {
+                        return isNullOrEmpty(channelName) ? super.getUploaderName() : channelName;
+                    }
+
+                    @Override
+                    public String getUploaderUrl() throws ParsingException {
+                        return isNullOrEmpty(channelUrl) ? super.getUploaderName() : channelUrl;
+                    }
+
+                    @Override
+                    public boolean isUploaderVerified() throws ParsingException {
+                        switch (channelVerifiedStatus) {
+                            case VERIFIED:
+                                return true;
+                            case UNVERIFIED:
+                                return false;
+                            default:
+                                return super.isUploaderVerified();
+                        }
                     }
                 });
     }
@@ -434,8 +481,7 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
                 .getString("token");
 
         final byte[] body = JsonWriter.string(prepareDesktopJsonBuilder(getExtractorLocalization(),
-                        getExtractorContentCountry(),
-                        useVisitorData && channelIds.size() >= 3 ? channelIds.get(2) : null)
+                        getExtractorContentCountry())
                         .value("continuation", continuation)
                         .done())
                 .getBytes(StandardCharsets.UTF_8);
@@ -457,8 +503,7 @@ public class YoutubeChannelTabExtractor extends ChannelTabExtractor {
         VideosTabExtractor(final StreamingService service,
                            final ListLinkHandler linkHandler,
                            final JsonObject tabRenderer,
-                           @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-                           final Optional<YoutubeChannelHelper.ChannelHeader> channelHeader,
+                           @Nullable final YoutubeChannelHelper.ChannelHeader channelHeader,
                            final String channelName,
                            final String channelId,
                            final String channelUrl) {
